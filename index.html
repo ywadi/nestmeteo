@@ -83,6 +83,14 @@
       return urlParams.get(param) || fallback;
     }
 
+    function parseDateString(dateStr, fallback) {
+      const date = new Date(dateStr);
+      if (!isNaN(date)) {
+        return date.toISOString().split('T')[0];
+      }
+      return fallback;
+    }
+
     function getWeatherEmoji(code) {
       const map = {
         0: "☀️ Clear",
@@ -117,8 +125,10 @@
       return map[code] || code;
     }
 
-    const startDate = getQueryParam('start', '2024-01-01');
-    const endDate = getQueryParam('end', '2024-01-31');
+    const startDateRaw = getQueryParam('start', '2024-01-01');
+    const endDateRaw = getQueryParam('end', '2024-01-31');
+    const startDate = parseDateString(startDateRaw, '2024-01-01');
+    const endDate = parseDateString(endDateRaw, '2024-01-31');
     const latitude = getQueryParam('lat', '25.276987');
     const longitude = getQueryParam('lon', '51.520008');
 
@@ -152,5 +162,4 @@
   </script>
 </body>
 </html>
-
 
