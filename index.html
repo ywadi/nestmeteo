@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qatar Daily Historical Weather</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+    }
+    table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      background: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      table-layout: fixed;
+    }
+    thead {
+      background-color: #007BFF;
+      color: white;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .table-wrapper {
+      flex: 1;
+      overflow: auto;
+    }
+    .arrow {
+      display: inline-block;
+      transform: rotate(0deg);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Weather</th>
+            <th>Max Temp (°C)</th>
+            <th>Min Temp (°C)</th>
+            <th>Humidity (%)</th>
+            <th>Wind Speed (m/s)</th>
+            <th>Wind Dir</th>
+            <th>Dew Point (°C)</th>
+            <th>Precip. (mm)</th>
+            <th>Cloud Cover (%)</th>
+          </tr>
+        </thead>
+        <tbody id="weather-body">
+          <!-- Data Rows Injected Here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    function getQueryParam(param, fallback) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param) || fallback;
+    }
+
+    function getWeatherEmoji(code) {
+      const map = {
+        0: "☀️ Clear",
+        1: "🌤️ Mainly Clear",
+        2: "⛅ Partly Cloudy",
+        3: "☁️ Overcast",
+        45: "🌫️ Fog",
+        48: "🌫️ Depositing Rime Fog",
+        51: "🌦️ Light Drizzle",
+        53: "🌦️ Moderate Drizzle",
+        55: "🌦️ Dense Drizzle",
+        56: "🌧️ Light Freezing Drizzle",
+        57: "🌧️ Dense Freezing Drizzle",
+        61: "🌧️ Slight Rain",
+        63: "🌧️ Moderate Rain",
+        65: "🌧️ Heavy Rain",
+        66: "🌧️ Light Freezing Rain",
+        67: "🌧️ Heavy Freezing Rain",
+        71: "🌨️ Slight Snow Fall",
+        73: "🌨️ Moderate Snow Fall",
+        75: "🌨️ Heavy Snow Fall",
+        77: "🌨️ Snow Grains",
+        80: "🌧️ Slight Showers",
+        81: "🌧️ Moderate Showers",
+        82: "🌧️ Violent Showers",
+        85: "❄️ Slight Snow Showers",
+        86: "❄️ Heavy Snow Showers",
+        95: "⛈️ Thunderstorm",
+        96: "⛈️ Thunderstorm with Slight Hail",
+        99: "⛈️ Thunderstorm with Heavy Hail"
+      };
+      return map[code] || code;
+    }
+
+    const startDate = getQueryParam('start', '2024-01-01');
+    const endDate = getQueryParam('end', '2024-01-31');
+    const latitude = getQueryParam('lat', '25.276987');
+    const longitude = getQueryParam('lon', '51.520008');
+
+    const apiUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startDate}&end_date=${endDate}&daily=weathercode,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,wind_direction_10m_dominant,dew_point_2m_mean,precipitation_sum,cloud_cover_mean&timezone=auto`;
+
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        const days = data.daily.time.length;
+        const tbody = document.getElementById('weather-body');
+
+        for (let i = days - 1; i >= 0; i--) {
+          const windDir = data.daily.wind_direction_10m_dominant[i];
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${data.daily.time[i]}</td>
+            <td>${getWeatherEmoji(data.daily.weathercode[i])}</td>
+            <td>${data.daily.temperature_2m_max[i]}</td>
+            <td>${data.daily.temperature_2m_min[i]}</td>
+            <td>${data.daily.relative_humidity_2m_mean[i]}</td>
+            <td>${data.daily.wind_speed_10m_max[i]}</td>
+            <td><span class="arrow" style="transform: rotate(${windDir}deg);">↑</span><br>${windDir}°</td>
+            <td>${data.daily.dew_point_2m_mean[i]}</td>
+            <td>${data.daily.precipitation_sum[i]}</td>
+            <td>${data.daily.cloud_cover_mean[i]}</td>
+          `;
+          tbody.appendChild(row);
+        }
+      })
+      .catch(err => console.error('Error fetching weather data:', err));
+  </script>
+</body>
+</html>
+
+
